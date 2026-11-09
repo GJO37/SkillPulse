@@ -1,0 +1,96 @@
+SkillPulse Implementation Plan v5 — 01/11/2026
+
+1. PROJECT SCOPE
+Purpose: Placement Intelligence & Skill Gap Analytics System.
+Focus: Skill gap analysis | Placement readiness | Business intelligence | Analytics dashboards
+Out of scope: Resume parsing | Learning recommendations | External forms and BI apps | Model training
+
+2. DATA & PRESETS
+Dataset:
+* Mandatory dataset loading at every application launch; proceed only after successful loading.
+* Dataset contains job roles and their required skills for a specialized field.
+* Data loader validates, loads, and normalizes the dataset.
+* Loaded dataset remains available throughout the session.
+* Valid replacement: replace dataset and clear previously cached presets.
+* Invalid replacement: retain current dataset and all cached presets.
+
+Candidate presets:
+* Generate one JSON preset per completed candidate profile.
+* Preset structure:
+  {
+    "candidate": {},
+    "skillset": {},
+    "proficiency": {},
+    "evidence": {}
+  }
+* Cache individual presets during the session.
+* Export selected cached presets together in CSV/XLSX format for batch analysis.
+
+3. APPLICATION WORKFLOW
+* Main interfaces: Input Profile and Intelligence Dashboard.
+* Startup gate: Dataset loading occurs before access to either main interface.
+
+3.1 INPUT PROFILE
+Candidate details -> Select skills from dataset tags -> General questionnaire -> Generate JSON preset.
+
+Skill classification (relative to selected target role)
+* Core: Skills directly required by the target role.
+* Non-core: Other dataset skills evaluated through Dice similarity with other job roles.
+* Missing core skills score zero but remain in the readiness denominator.
+
+Questionnaire (10 general questions; not repeated per skill)
+* Proficiency: 5 questions, each rated 1–5.
+* Evidence: 5 questions, each answered by choosing an evidence-count range.
+* Average each group's five weights separately
+* Apply the resulting candidate-level weights to all selected skills.
+
+Proficiency mapping: 1 -> 0.2 | 2 -> 0.4 | 3 -> 0.6 | 4 -> 0.8 | 5 -> 1.0
+Evidence mapping:    0 -> 0.2 | 1–2 -> 0.4 | 3–4 -> 0.6 | 5–6 -> 0.8 | 7+ -> 1.0
+
+3.2 INTELLIGENCE DASHBOARD
+Modes: Target-role analysis | Job-discovery analysis.
+Flow: Select target role and preset(s) -> Analyze -> Display insights.
+
+Single-candidate analysis:
+* Readiness score for target-role analysis.
+* Versatility score for both analysis modes.
+* Radar/spider chart of core-skill coverage.
+* Column chart of estimated skill scores.
+* Potential job-role matches table based on selected skills.
+
+Batch analysis:
+* Readiness: mean, median, minimum, maximum.
+* Versatility: mean, median, minimum, maximum.
+* Core-skill coverage trend.
+* Common available-skills trend.
+* Common missing core-skills trend.
+* Potential job-role matches table.
+
+4. SCORING RULES
+* Readiness estimates alignment with a selected target role.
+* Versatility estimates breadth of useful skills across dataset roles.
+* Dice similarity compares required-skill sets of the target role and other dataset roles.
+* Core-skill significance = 1.0.
+* Non-core-skill significance = mean of positive Dice similarities for other roles containing that skill.
+* Relevant skills = core skills + non-core skills with positive significance.
+* Selected relevant skills count as covered regardless of questionnaire weights.
+* Missing core skills contribute zero to the numerator and remain in the readiness denominator.
+* Role diversity counts a job role as covered when at least one of its required skills is selected.
+
+5. FORMULAS
+* P = (P1 + P2 + P3 + P4 + P5) / 5
+* E = (E1 + E2 + E3 + E4 + E5) / 5
+* Skill Strength = P × E
+* Dice(A, B) = 2 × |A ∩ B| / (|A| + |B|)
+* Skill Score = Skill Significance × Skill Strength (zero for unselected skills)
+* Skill Coverage = Covered Relevant Skills / Total Relevant Skills
+* Role Diversity = Covered Job Roles / Total Job Roles
+* Readiness = Sum of Skill Scores / Sum of Maximum Possible Skill Scores
+* Versatility = Skill Coverage × Role Diversity
+
+6. TECHNOLOGY STACK
+- Python: Application and analytics logic.
+- Tkinter: Desktop user interface.
+- Matplotlib: Charts embedded in the interface.
+- JSON: Individual candidate presets and session cache.
+- CSV/XLSX: Exported multi-candidate batch files.
