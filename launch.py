@@ -1,14 +1,14 @@
 
 from interfaces.controller import Controller
-from interfaces.load import LoadInterface
+from interfaces.home import HomeInterface
 
 
 def main():
     app = Controller()
 
-    app.add_frame("LoadInterface", LoadInterface)
+    app.add_frame("HomeInterface", HomeInterface)
 
-    app.show_frame("LoadInterface")
+    app.show_frame("HomeInterface")
     app.mainloop()
 
 
